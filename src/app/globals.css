@@ -1,0 +1,513 @@
+@import "tailwindcss";
+
+/* DM Mono 400 */
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dm-mono-400-ext.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dm-mono-400.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* DM Mono 500 */
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/dm-mono-500-ext.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/dm-mono-500.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Playfair Display 700 */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/playfair-display-700-cyrillic.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/playfair-display-700-vietnamese.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/playfair-display-700-ext.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/playfair-display-700.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* GT Ultra */
+@font-face {
+  font-family: "GT Ultra";
+  src: url("/fonts/gt-ultra.otf") format("opentype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  overscroll-behavior: none;
+  font-family: 'DM Mono', ui-monospace, monospace;
+}
+
+a {
+  color: #fff;
+}
+a:hover {
+  color: #FFB4A8;
+}
+input[type=range] {
+  accent-color: #FFFFFF;
+}
+
+[data-tg="app"] {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+[data-tg="app"] button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+html[data-touch] [data-tg="app"] {
+  touch-action: none;
+  top: var(--tg-top, 0px) !important;
+  bottom: auto !important;
+  height: var(--tg-h, 100%) !important;
+}
+[data-tg="modes"] {
+  top: calc(16px + env(safe-area-inset-top)) !important;
+  right: calc(16px + env(safe-area-inset-right)) !important;
+}
+[data-tg="bar"] {
+  left: calc(24px + env(safe-area-inset-left)) !important;
+  right: calc(24px + env(safe-area-inset-right)) !important;
+  bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+}
+[data-tg="coarse"] {
+  display: none;
+}
+@media (pointer: coarse) {
+  [data-tg="fine"] { display: none; }
+  [data-tg="coarse"] { display: inline; }
+}
+@media (max-width: 600px) {
+  [data-tg="bar"] {
+    left: calc(16px + env(safe-area-inset-left)) !important;
+    right: calc(16px + env(safe-area-inset-right)) !important;
+    bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+    gap: 10px !important;
+  }
+  [data-tg="hints"] {
+    gap: 12px !important;
+    font-size: 11px;
+  }
+  [data-tg="ctrls"] {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    gap: 8px !important;
+  }
+  [data-tg="pal"] {
+    gap: 4px !important;
+  }
+  [data-tg="sw"] {
+    --sw: clamp(13px, calc((100vw - 183px) / 10), 22px);
+    width: var(--sw) !important;
+    height: var(--sw) !important;
+  }
+  [data-tg="dot"] {
+    width: calc(var(--sw) * .46) !important;
+    height: calc(var(--sw) * .46) !important;
+  }
+  [data-tg="btn"] {
+    padding: 7px 11px !important;
+  }
+}
+@media (max-width: 720px) {
+  [data-tg="poster"] {
+    display: flex !important;
+    flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+  [data-tg="poster"]::before {
+    content: "";
+    order: -2;
+    position: sticky;
+    top: 0;
+    flex: none;
+    height: calc(60px + env(safe-area-inset-top));
+    margin-bottom: calc(-60px - env(safe-area-inset-top));
+    background: linear-gradient(#000 62%, rgba(0,0,0,0));
+    z-index: 4;
+    pointer-events: none;
+  }
+  [data-tg="stage"] {
+    order: -1;
+    flex: none;
+    padding: calc(64px + env(safe-area-inset-top)) 16px 12px !important;
+  }
+  [data-tg="pcanvas"] {
+    width: 100% !important;
+    max-width: 520px;
+  }
+  [data-tg="panel"] {
+    flex: none;
+    border-right: 0 !important;
+    border-top: 1px solid #1E1E1E;
+    overflow: visible !important;
+    padding: 20px 16px calc(32px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* Garden live peers */
+[data-tg="count"]:empty {
+  display: none;
+}
+[data-tg="count"]::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-right: 8px;
+  vertical-align: 1px;
+  animation: tg-live 2.4s ease-in-out infinite;
+}
+@keyframes tg-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
+}
+.tg-peer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+  transition: opacity .45s;
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: .04em;
+  line-height: 1;
+}
+.tg-peer svg {
+  display: block;
+  overflow: visible;
+}
+.tg-peer span {
+  position: absolute;
+  left: 14px;
+  top: 18px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #000;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .tg-peer { font-size: 10px; }
+  .tg-peer svg { width: 15px; height: 17px; }
+  .tg-peer span { left: 12px; top: 15px; padding: 3px 7px; }
+}
+
+/* Top left Copy & Coffee Chrome */
+#tg-copy {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top));
+  left: calc(16px + env(safe-area-inset-left));
+  -webkit-tap-highlight-color: transparent;
+  z-index: 6;
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+#tg-copy[hidden] {
+  display: none;
+}
+#tg-copy .pill {
+  padding: 4px;
+  border: 1px solid #2A2A2A;
+  border-radius: 999px;
+  background: #000;
+  transition: border-color .15s;
+}
+#tg-copy button {
+  display: block;
+  min-width: 9ch;
+  box-sizing: content-box;
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font: inherit;
+  text-align: center;
+  background: transparent;
+  color: #EDEDED;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color .15s;
+}
+#tg-copy button:focus-visible {
+  outline: 1px solid #FFFFFF;
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  #tg-copy .pill:hover {
+    border-color: #FFFFFF;
+  }
+  #tg-copy .pill:hover button {
+    color: #FFFFFF;
+  }
+}
+#tg-copy .note {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 5px;
+  white-space: nowrap;
+  color: #8C8C8C;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity .2s, transform .2s;
+  pointer-events: none;
+}
+#tg-copy.on .note {
+  opacity: 1;
+  transform: none;
+}
+#tg-copy .row {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+#tg-copy a.coffee {
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
+}
+#tg-copy a.coffee[hidden] {
+  display: none;
+}
+#tg-copy a.coffee .cap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px 7px 10px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  color: #000;
+  white-space: nowrap;
+  transition: transform .14s cubic-bezier(.3, .7, .4, 1);
+}
+#tg-copy a.coffee .s {
+  display: none;
+}
+#tg-copy a.coffee svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: -1.5px 0;
+  overflow: visible;
+  flex: none;
+}
+#tg-copy a.coffee svg * {
+  transform-box: view-box;
+}
+#tg-copy a.coffee .cup path {
+  fill: #000;
+}
+#tg-copy a.coffee .cup .handle {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1.4;
+}
+#tg-copy a.coffee .stem {
+  fill: none;
+  stroke: var(--tg-stem, #3257FF);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition: stroke-dashoffset .18s ease-in .08s, opacity 0s linear .26s;
+}
+#tg-copy a.coffee .leaf,
+#tg-copy a.coffee .leaf2 {
+  fill: var(--tg-stem, #3257FF);
+  transform: scale(0);
+  transition: transform .14s ease-in .04s;
+}
+#tg-copy a.coffee .leaf {
+  transform-origin: 7.7px -1.6px;
+}
+#tg-copy a.coffee .leaf2 {
+  transform-origin: 8.3px -5.4px;
+}
+#tg-copy a.coffee .petals {
+  fill: var(--tg-flower, #FF1400);
+}
+#tg-copy a.coffee .swirl {
+  fill: none;
+  stroke: var(--tg-detail, #FFB4A8);
+  stroke-width: .9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform-origin: 7.8px -15.5px;
+}
+#tg-copy a.coffee .bloom {
+  transform: scale(0);
+  transform-origin: 8px -9.6px;
+  transition: transform .14s ease-in;
+}
+#tg-copy a.coffee .plant {
+  transform-origin: 8px 9px;
+}
+#tg-copy a.coffee.on .stem {
+  stroke-dashoffset: 0;
+  opacity: 1;
+  transition: stroke-dashoffset .42s cubic-bezier(.2, .7, .3, 1), opacity 0s;
+}
+#tg-copy a.coffee.on .leaf {
+  transform: scale(1);
+  transition: transform .36s cubic-bezier(.3, 1.6, .5, 1) .18s;
+}
+#tg-copy a.coffee.on .leaf2 {
+  transform: scale(1);
+  transition: transform .36s cubic-bezier(.3, 1.6, .5, 1) .26s;
+}
+#tg-copy a.coffee.on .bloom {
+  transform: scale(1);
+  transition: transform .5s cubic-bezier(.3, 1.6, .5, 1) .3s;
+}
+#tg-copy a.coffee.on .swirl {
+  animation: tg-swirl .8s cubic-bezier(.2, .7, .3, 1) .3s both;
+}
+#tg-copy a.coffee.on .plant {
+  animation: tg-sway 2.8s ease-in-out .8s infinite;
+}
+#tg-copy a.coffee.touch.on .plant {
+  animation-iteration-count: 2;
+}
+#tg-copy a.coffee.down .cap {
+  transform: scale(.95);
+}
+#tg-copy a.coffee.on.down .bloom {
+  transform: scale(.84);
+  transition: transform .1s ease-out;
+}
+@keyframes tg-swirl {
+  from { transform: rotate(-140deg); }
+  to { transform: rotate(0); }
+}
+@keyframes tg-sway {
+  0%, 100% { transform: rotate(0); }
+  30% { transform: rotate(-4deg); }
+  70% { transform: rotate(3deg); }
+}
+#tg-copy a.coffee:focus-visible {
+  outline: 1px solid #FFFFFF;
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  #tg-copy a.coffee:hover { border-color: #FFFFFF; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #tg-copy a.coffee * { transition: none !important; animation: none !important; }
+}
+#tg-copy .by {
+  margin: 10px 0 0 5px;
+  color: #8C8C8C;
+  white-space: nowrap;
+  transition: opacity .2s;
+}
+#tg-copy .by a {
+  color: #EDEDED;
+  text-decoration: underline;
+  text-decoration-color: rgba(237, 237, 237, .35);
+  text-underline-offset: 3px;
+  transition: text-decoration-color .15s;
+}
+#tg-copy .by a:hover {
+  text-decoration-color: #EDEDED;
+}
+#tg-copy.on .by {
+  opacity: 0;
+}
+@media (max-width: 600px) {
+  #tg-copy button { padding: 7px 11px; }
+  #tg-copy a.coffee .cap { padding: 7px 10px 7px 7px; gap: 5px; }
+  #tg-copy a.coffee .l { display: none; }
+  #tg-copy a.coffee .s { display: inline; }
+}
+@media (max-width: 380px) {
+  #tg-copy a.coffee .s { display: none; }
+  #tg-copy a.coffee .cap { padding: 7px 9px; }
+}
+@media (max-width: 349px) {
+  #tg-copy button { padding: 7px 9px; }
+  [data-tg="modes"] button { padding: 7px 10px !important; }
+}
+
+/* Custom sleek scrollbar for Poster Panel */
+[data-tg="panel"]::-webkit-scrollbar {
+  width: 5px;
+}
+[data-tg="panel"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+[data-tg="panel"]::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+}
+[data-tg="panel"]::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Fluid smooth transition container for orientation */
+.tg-stage-viewport {
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              aspect-ratio 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.4s ease,
+              transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: width, height, aspect-ratio;
+}
+
