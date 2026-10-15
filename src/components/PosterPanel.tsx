@@ -3,6 +3,7 @@
 import React from "react";
 import { PRESETS, MotionPreset } from "../constants/presets";
 import { PALETTES } from "../constants/palettes";
+import { FLOWER_OPTIONS, FlowerType } from "../constants/flowers";
 
 export type PosterOrientation = "landscape" | "portrait" | "square";
 
@@ -14,6 +15,8 @@ interface PosterPanelProps {
   onOrientationChange: (orient: PosterOrientation) => void;
   currentPreset: string;
   onPresetChange: (presetId: string) => void;
+  flowerType: FlowerType;
+  onFlowerChange: (flower: FlowerType) => void;
   paletteIdx: number;
   onPaletteChange: (idx: number) => void;
   onExportVideo: () => void;
@@ -35,6 +38,8 @@ export function PosterPanel({
   onOrientationChange,
   currentPreset,
   onPresetChange,
+  flowerType,
+  onFlowerChange,
   paletteIdx,
   onPaletteChange,
   onExportVideo,
@@ -124,30 +129,6 @@ export function PosterPanel({
             e.currentTarget.style.borderColor = "#2A2A2A";
           }}
         />
-        <button
-          type="button"
-          onClick={onRegrow}
-          style={{
-            alignSelf: "flex-start",
-            background: "transparent",
-            border: "1px solid #2A2A2A",
-            color: "#EDEDED",
-            font: "inherit",
-            fontSize: 12,
-            padding: "8px 14px",
-            borderRadius: 999,
-            cursor: "pointer",
-            transition: "border-color 0.15s ease",
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.borderColor = "#FFFFFF";
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = "#2A2A2A";
-          }}
-        >
-          Regrow garden
-        </button>
       </div>
 
       {/* Orientation Selector */}
@@ -168,35 +149,72 @@ export function PosterPanel({
         >
           {(
             [
-              { key: "landscape", label: "Landscape", ratio: "16:9" },
-              { key: "portrait", label: "Portrait", ratio: "9:16" },
-              { key: "square", label: "Square", ratio: "1:1" },
+              {
+                key: "landscape",
+                label: "Landscape",
+                ratio: "16:9",
+                icon: (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <rect x="2.4" y="6.6" width="19.2" height="10.8" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                  </svg>
+                ),
+              },
+              {
+                key: "portrait",
+                label: "Portrait",
+                ratio: "9:16",
+                icon: (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <rect x="6.6" y="2.4" width="10.8" height="19.2" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                  </svg>
+                ),
+              },
+              {
+                key: "square",
+                label: "Square",
+                ratio: "1:1",
+                icon: (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <rect x="4.5" y="4.5" width="15" height="15" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                  </svg>
+                ),
+              },
             ] as const
-          ).map(({ key, label, ratio }) => {
+          ).map(({ key, label, ratio, icon }) => {
             const isSelected = orientation === key;
             return (
               <button
                 key={key}
                 type="button"
                 onClick={() => onOrientationChange(key)}
+                aria-label={label}
+                title={`${label} (${ratio})`}
                 style={{
                   border: 0,
                   borderRadius: 6,
-                  padding: "8px 4px",
-                  font: "inherit",
+                  padding: "9px 0",
                   cursor: "pointer",
                   display: "flex",
-                  flexDirection: "column",
                   alignItems: "center",
-                  gap: 2,
+                  justifyContent: "center",
                   background: isSelected ? "#FFFFFF" : "transparent",
-                  color: isSelected ? "#000000" : "#A0A0A0",
-                  fontWeight: isSelected ? 600 : 400,
+                  color: isSelected ? "#000000" : "#808080",
                   transition: "all 0.15s ease",
                 }}
+                onMouseEnter={e => {
+                  if (!isSelected) {
+                    e.currentTarget.style.color = "#FFFFFF";
+                    e.currentTarget.style.background = "#1B1B1B";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isSelected) {
+                    e.currentTarget.style.color = "#808080";
+                    e.currentTarget.style.background = "transparent";
+                  }
+                }}
               >
-                <span style={{ fontSize: 11.5 }}>{label}</span>
-                <span style={{ fontSize: 9.5, opacity: isSelected ? 0.7 : 0.5 }}>{ratio}</span>
+                {icon}
               </button>
             );
           })}
@@ -217,28 +235,81 @@ export function PosterPanel({
                 type="button"
                 onClick={() => onPresetChange(p.id)}
                 style={{
-                  textAlign: "left",
+                  textAlign: "center",
                   background: isSelected ? "#161616" : "transparent",
                   border: `1px solid ${isSelected ? "#FFFFFF" : "#2A2A2A"}`,
-                  color: "#FFFFFF",
+                  color: isSelected ? "#FFFFFF" : "#BDBDBD",
                   font: "inherit",
                   padding: "10px 12px",
                   borderRadius: 10,
                   cursor: "pointer",
                   display: "flex",
-                  flexDirection: "column",
-                  gap: 4,
-                  transition: "border-color 0.15s ease",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: isSelected ? 600 : 400,
+                  transition: "all 0.15s ease",
                 }}
                 onMouseEnter={e => {
-                  if (!isSelected) e.currentTarget.style.borderColor = "#8C8C8C";
+                  if (!isSelected) {
+                    e.currentTarget.style.borderColor = "#8C8C8C";
+                    e.currentTarget.style.color = "#FFFFFF";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isSelected) {
+                    e.currentTarget.style.borderColor = "#2A2A2A";
+                    e.currentTarget.style.color = "#BDBDBD";
+                  }
+                }}
+              >
+                <span style={{ fontSize: 13 }}>{p.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Flower Species Section */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ color: "#8C8C8C", textTransform: "uppercase", fontSize: 11, letterSpacing: "0.08em" }}>
+            Flower
+          </div>
+          <div style={{ color: "#8C8C8C", fontSize: 11 }}>
+            {FLOWER_OPTIONS.find(f => f.id === flowerType)?.label || "Custom"}
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+          {FLOWER_OPTIONS.map(f => {
+            const isSelected = flowerType === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => onFlowerChange(f.id)}
+                title={`${f.label} · ${f.desc}`}
+                style={{
+                  background: isSelected ? "#1E1E1E" : "transparent",
+                  border: `1px solid ${isSelected ? "#FFFFFF" : "#2A2A2A"}`,
+                  borderRadius: 8,
+                  padding: "8px 4px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 4,
+                  cursor: "pointer",
+                  color: isSelected ? "#FFFFFF" : "#8C8C8C",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={e => {
+                  if (!isSelected) e.currentTarget.style.borderColor = "#666";
                 }}
                 onMouseLeave={e => {
                   if (!isSelected) e.currentTarget.style.borderColor = "#2A2A2A";
                 }}
               >
-                <span style={{ fontSize: 13 }}>{p.label}</span>
-                <span style={{ color: "#8C8C8C", fontSize: 11 }}>{p.sub}</span>
+                <span style={{ fontSize: 16 }}>{f.icon}</span>
+                <span style={{ fontSize: 10.5, letterSpacing: "0.02em" }}>{f.label}</span>
               </button>
             );
           })}

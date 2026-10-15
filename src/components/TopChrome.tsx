@@ -43,7 +43,6 @@ export function TopChrome({ mode, onModeChange }: TopChromeProps) {
             Paste it into Claude to grow your own
           </div>
         </div>
-
       </div>
 
       {/* Top Right: Mode Segmented Pill */}

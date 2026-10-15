@@ -1,6 +1,7 @@
 import { Letter, drawButterfly } from "./garden-engine";
 import { getPreset } from "../constants/presets";
 import { Palette } from "../constants/palettes";
+import { FlowerType } from "../constants/flowers";
 import { createRng, easeOutCubic } from "./math";
 import { createBackend } from "./geometry";
 import { layoutCore } from "./layout";
@@ -14,6 +15,7 @@ export interface PosterState {
   preset: string;
   W: number;
   H: number;
+  flower?: FlowerType;
 }
 
 /**
@@ -27,10 +29,12 @@ export function buildPosterLetters(
   PW: number,
   PH: number,
   mw: (ch: string) => number,
-  density: number
+  density: number,
+  flowerType?: FlowerType
 ): PosterState {
   const cleanText = (text || "").slice(0, 50) || " ";
   const pr = getPreset(presetId);
+  const activeFlower = flowerType || pr.flower || "rose";
   const rand = createRng(seed * 7919 + 1);
 
   const L: Letter[] = [];
@@ -51,8 +55,9 @@ export function buildPosterLetters(
       ws: prevL ? prevL.ws : Math.floor(rand() * 1e9),
       wi: prevL ? (prevL.wi || 0) + 1 : 0,
       prev: prevL,
+      flowerType: activeFlower,
     };
-    generateLetterGrowth(l, mw, density, Math.floor(rand() * 1e6));
+    generateLetterGrowth(l, mw, density, Math.floor(rand() * 1e6), activeFlower);
     L.push(l);
     prev = l;
   }
@@ -90,7 +95,7 @@ export function buildPosterLetters(
     l.cutRel = null;
     if (pr.id !== "scatter" && l.ch !== " " && nx && nx.ch === " ") {
       l.cutRel = Math.max(30, (nx.b || 0) - (l.b || 0));
-      generateLetterEnd(l, l.cutRel!, mw, density, Math.floor(rand() * 1e6));
+      generateLetterEnd(l, l.cutRel!, mw, density, Math.floor(rand() * 1e6), activeFlower);
     }
   });
 
@@ -158,6 +163,7 @@ export function buildPosterLetters(
     preset: pr.id,
     W: PW,
     H: PH,
+    flower: activeFlower,
   };
 }
 
@@ -184,6 +190,7 @@ export function posterDrawFrame(
   const backend = createBackend(g);
   const perchList: any[] = [];
 
+  const pr = getPreset(P.preset);
   const st: any = {
     letters: L,
     S: P.S,
@@ -197,6 +204,7 @@ export function posterDrawFrame(
     rotw: null,
     perchOn: false,
     perchList,
+    flowerType: P.flower || pr.flower || "rose",
   };
 
   L.forEach(l => {
@@ -341,6 +349,21 @@ export function posterDrawFrame(
       pts.push([lx + Math.cos(a) * r, ly + Math.sin(a) * r]);
     }
     backend.fill(pts, st.C.line);
+
+    // Radiating sunbeams so the light source is clearly a shining sun
+    for (let ray = 0; ray < 10; ray++) {
+      const rayAng = (ray * Math.PI * 2) / 10 + (tt / P.T) * Math.PI;
+      const r1 = r * 1.35;
+      const r2 = r * (1.8 + 0.35 * Math.sin(tt * 0.005 + ray * 1.2));
+      backend.stroke(
+        [
+          [lx + Math.cos(rayAng) * r1, ly + Math.sin(rayAng) * r1],
+          [lx + Math.cos(rayAng) * r2, ly + Math.sin(rayAng) * r2],
+        ],
+        st.C.line,
+        Math.max(1, P.S * 0.014)
+      );
+    }
   }
 
   if (P.preset === "visit") {

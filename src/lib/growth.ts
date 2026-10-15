@@ -1,5 +1,6 @@
 import { Letter, createWordParameters, growBotanicalBranch } from "./garden-engine";
 import { createRng, cubicBezier } from "./math";
+import { FlowerType } from "../constants/flowers";
 
 /**
  * Generates botanical branch geometry, thorns, leaves, roses, and tendrils for a single letter.
@@ -8,10 +9,12 @@ export function generateLetterGrowth(
   l: Letter,
   mw: (ch: string) => number,
   density: number,
-  randSeed: number
+  randSeed: number,
+  flowerType?: FlowerType
 ) {
   const r = createRng((l.ws! ^ Math.imul(l.wi! + 1, 2654435761)) + Math.floor(randSeed));
-  const p = createWordParameters(l.ws!, density);
+  const activeFlower = flowerType || l.flowerType;
+  const p = createWordParameters(l.ws!, density, activeFlower);
   const E: any[] = [];
   let k0 = 0;
   const nid = () => l.id * 100 + (k0++);
@@ -89,10 +92,12 @@ export function generateLetterEnd(
   rel: number,
   mw: (ch: string) => number,
   density: number,
-  randSeed: number
+  randSeed: number,
+  flowerType?: FlowerType
 ) {
   const r = createRng(l.ws! + l.wi! * 31 + Math.floor(randSeed));
-  const p = createWordParameters(l.ws!, density);
+  const activeFlower = flowerType || l.flowerType;
+  const p = createWordParameters(l.ws!, density, activeFlower);
   const E: any[] = [];
   let k0 = 50;
   const nid = () => l.id * 100 + (k0++);

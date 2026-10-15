@@ -130,27 +130,55 @@ html[data-touch] [data-tg="app"] {
   [data-tg="fine"] { display: none; }
   [data-tg="coarse"] { display: inline; }
 }
-@media (max-width: 600px) {
+@media (max-width: 767px) {
   [data-tg="bar"] {
     left: calc(16px + env(safe-area-inset-left)) !important;
     right: calc(16px + env(safe-area-inset-right)) !important;
     bottom: calc(14px + env(safe-area-inset-bottom)) !important;
-    gap: 10px !important;
+    gap: 8px !important;
+    justify-content: center !important;
   }
   [data-tg="hints"] {
     gap: 12px !important;
     font-size: 11px;
   }
   [data-tg="ctrls"] {
-    flex: 1 1 100%;
-    justify-content: space-between;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  [data-tg="pickers"] {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    max-width: 100% !important;
+  }
+  [data-tg="actions"] {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
     gap: 8px !important;
   }
+  [data-tg="flowers"] {
+    padding: 2px 4px !important;
+    gap: 2px !important;
+  }
+  [data-tg="flw"] {
+    width: clamp(18px, 4.2vw, 24px) !important;
+    height: clamp(18px, 4.2vw, 24px) !important;
+    font-size: clamp(10px, 2.5vw, 13px) !important;
+  }
   [data-tg="pal"] {
-    gap: 4px !important;
+    padding: 3px 5px !important;
+    gap: 3px !important;
   }
   [data-tg="sw"] {
-    --sw: clamp(13px, calc((100vw - 183px) / 10), 22px);
+    --sw: clamp(12px, 2.8vw, 18px);
     width: var(--sw) !important;
     height: var(--sw) !important;
   }
@@ -160,6 +188,30 @@ html[data-touch] [data-tg="app"] {
   }
   [data-tg="btn"] {
     padding: 7px 11px !important;
+  }
+}
+@media (min-width: 768px) {
+  [data-tg="bar"] {
+    justify-content: flex-end !important;
+  }
+  [data-tg="ctrls"] {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 12px !important;
+  }
+  [data-tg="pickers"] {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  [data-tg="actions"] {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
   }
 }
 @media (max-width: 720px) {

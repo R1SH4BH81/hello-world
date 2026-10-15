@@ -1,18 +1,21 @@
+import { FlowerType } from "./flowers";
+
 export interface MotionPreset {
   id: string;
   label: string;
-  sub: string;
+  sub?: string;
   T: number;
+  flower: FlowerType;
 }
 
 export const PRESETS: MotionPreset[] = [
-  { id: "breathe", label: "Breathe", sub: "Slow sway · 3s", T: 3000 },
-  { id: "grow", label: "Grow & wither", sub: "Bloom, then back · 6s", T: 6000 },
-  { id: "typed", label: "Typed", sub: "Type, cut, repeat · 5s", T: 5000 },
-  { id: "wind", label: "Gust", sub: "Wind sweeps through · 4s", T: 4000 },
-  { id: "reach", label: "Reach", sub: "Stems follow a light · 6s", T: 6000 },
-  { id: "scatter", label: "Scatter", sub: "Random bloom, fade · 6s", T: 6000 },
-  { id: "visit", label: "Visitor", sub: "Butterfly drops by · 7s", T: 7000 },
+  { id: "breathe", label: "Inhale", sub: "Slow sway · Rose 🌹", T: 3000, flower: "rose" },
+  { id: "grow", label: "Grow", sub: "Bloom & wither · Sakura 🌸", T: 6000, flower: "sakura" },
+  { id: "typed", label: "Reveal", sub: "Type & repeat · Tulip 🌷", T: 5000, flower: "tulip" },
+  { id: "wind", label: "Drift", sub: "Wind breeze · Daisy 🌼", T: 4000, flower: "daisy" },
+  { id: "reach", label: "Ascend", sub: "Stems seek light · Sunflower 🌻", T: 6000, flower: "sunflower" },
+  { id: "scatter", label: "Disperse", sub: "Spiraling fade · Poppy 🌺", T: 6000, flower: "poppy" },
+  { id: "visit", label: "Flutter", sub: "Butterfly perch · Lotus 🪷", T: 7000, flower: "lotus" },
 ];
 
 export function getPreset(id: string): MotionPreset {

@@ -1,4 +1,5 @@
-import { Letter, drawRosePetals, drawLeafShape } from "./garden-engine";
+import { Letter, drawFlowerPetals, drawLeafShape } from "./garden-engine";
+import { FlowerType } from "../constants/flowers";
 import { easeOutCubic, spring, curveAt, jitter } from "./math";
 import { getLayerAt } from "./geometry";
 
@@ -19,6 +20,7 @@ export interface GardenSceneOptions {
   face?: boolean;
   textAll?: boolean;
   perchOn?: boolean;
+  flowerType?: FlowerType;
   warp?: ((x: number, y: number, l: Letter) => [number, number]) | null;
   rotw?: ((e: any) => number) | null;
   nearPointer?: ((x: number, y: number) => [number, number] | null) | null;
@@ -166,7 +168,12 @@ export function renderGardenScene(
             if ((st.face || st.perchOn) && !l.dead && a > 700 && st.perchList) {
               st.perchList.push({ id: e.id, x: p[0], y: p[1], R: e.R * scale * kk });
             }
-            drawRosePetals(
+            const flwToDraw =
+              st.flowerType && st.flowerType !== "wildflower"
+                ? st.flowerType
+                : (e.flowerType || "rose");
+            drawFlowerPetals(
+              flwToDraw,
               backend,
               p[0],
               p[1],

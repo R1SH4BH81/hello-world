@@ -14,6 +14,7 @@ import {
   WeaveSegment,
 } from "./geometry";
 import { FONT_FAMILY } from "../constants/garden";
+import { FlowerType, resolveFlowerType } from "../constants/flowers";
 
 export interface StemElement {
   t: "stem";
@@ -50,6 +51,7 @@ export interface RoseElement {
   turns: number;
   layer: number;
   d0: number;
+  flowerType?: FlowerType;
 }
 
 export type BotanicalElement = StemElement | LeafElement | RoseElement;
@@ -77,6 +79,7 @@ export interface Letter {
   lean?: [number, number];
   b?: number;
   d?: number;
+  flowerType?: FlowerType;
 }
 
 export interface WordParameters {
@@ -88,10 +91,12 @@ export interface WordParameters {
   curvy: number;
   bridgeP: number;
   w: number;
+  flowerType?: FlowerType;
 }
 
-export function createWordParameters(ws: number, density = 1): WordParameters {
+export function createWordParameters(ws: number, density = 1, flowerType?: FlowerType): WordParameters {
   const r = createRng(ws * 7 + 13);
+  const resolvedFlower = resolveFlowerType(flowerType, ws);
   return {
     roseP: 0.3 + r() * 0.3,
     leafy: (0.6 + r() * 0.8) * density,
@@ -101,6 +106,7 @@ export function createWordParameters(ws: number, density = 1): WordParameters {
     curvy: 0.8 + r() * 0.6,
     bridgeP: Math.min(0.95, (0.45 + r() * 0.35) * density),
     w: 0.5,
+    flowerType: resolvedFlower,
   };
 }
 
@@ -168,6 +174,7 @@ export function growBotanicalBranch(
       turns: 1.8 + r() * 1,
       layer,
       d0: td,
+      flowerType: p.flowerType || "rose",
     });
     if (r() < 0.2) {
       const oo = ta + (r() < 0.5 ? 1 : -1) * 1.3;
@@ -176,13 +183,14 @@ export function growBotanicalBranch(
         id: nid(),
         x: tp[0] + Math.cos(oo) * R * 1.4,
         y: tp[1] + Math.sin(oo) * R * 1.4,
-        R: R * (0.6 + r() * 0.3),
+        R: Math.max(R * 0.75, R * (0.6 + r() * 0.3)),
         rot: (r() - 0.5) * 1.2,
         ph1: r() * 6.28,
         ph2: r() * 6.28,
         turns: 1.8 + r(),
         layer,
         d0: td + 120,
+        flowerType: p.flowerType || "rose",
       });
     }
   } else if (tip === "fan") {
@@ -229,6 +237,31 @@ export function growBotanicalBranch(
   return P;
 }
 
+export function makeTransform(
+  cx: number,
+  cy: number,
+  R: number,
+  rot: number,
+  tl: [number, number] | null
+) {
+  const cr = Math.cos(rot),
+    sr = Math.sin(rot);
+  const tm = tl ? Math.hypot(tl[0], tl[1]) : 0;
+  const ux = tm ? tl![0] / tm : 0,
+    uy = tm ? tl![1] / tm : 0;
+  const sq = -0.28 * tm;
+  return (x: number, y: number, z = 0): [number, number] => {
+    let dx = x * cr - y * sr,
+      dy = x * sr + y * cr;
+    if (tm) {
+      const k = (dx * ux + dy * uy) * sq;
+      dx += k * ux + tl![0] * R * z;
+      dy += k * uy + tl![1] * R * z;
+    }
+    return [cx + dx, cy + dy];
+  };
+}
+
 export function drawRosePetals(
   backend: any,
   cx: number,
@@ -240,19 +273,7 @@ export function drawRosePetals(
   tl: [number, number] | null,
   palette: any
 ) {
-  const cr = Math.cos(rot), sr = Math.sin(rot);
-  const tm = tl ? Math.hypot(tl[0], tl[1]) : 0;
-  const ux = tm ? tl![0] / tm : 0, uy = tm ? tl![1] / tm : 0;
-  const sq = -0.28 * tm;
-  const transform = (x: number, y: number, z = 0): [number, number] => {
-    let dx = x * cr - y * sr, dy = x * sr + y * cr;
-    if (tm) {
-      const k = (dx * ux + dy * uy) * sq;
-      dx += k * ux + tl![0] * R * z;
-      dy += k * uy + tl![1] * R * z;
-    }
-    return [cx + dx, cy + dy];
-  };
+  const transform = makeTransform(cx, cy, R, rot, tl);
 
   const PETALS = [
     [0, -0.36, 0.56, 0.54, 0, 0, 0],
@@ -278,6 +299,7 @@ export function drawRosePetals(
     const pts: [number, number][] = [];
     for (let k = 0; k < 26; k++) pts.push(pt(k / 26 * Math.PI * 2));
     backend.fill(pts, palette.red);
+    backend.stroke(pts, palette.line, Math.max(0.5, lw * 0.5));
 
     if (q[6] && R >= 12 && s > 0.4) {
       const arc: [number, number][] = [];
@@ -309,6 +331,536 @@ export function drawRosePetals(
       const sclEnd = Math.max(2, Math.floor(fr * (sclPts.length - 1)) + 1);
       backend.stroke(sclPts.slice(0, sclEnd), palette.line, lw);
     }
+  }
+}
+
+/**
+ * Sakura / Cherry Blossom: 5 notched heart-shaped petals with delicate radiating stamens & pistils
+ */
+export function drawSakuraPetals(
+  backend: any,
+  cx: number,
+  cy: number,
+  R: number,
+  rot: number,
+  e: any,
+  a: number,
+  tl: [number, number] | null,
+  palette: any
+) {
+  const transform = makeTransform(cx, cy, R, rot, tl);
+  const lw = Math.max(0.8, R * 0.04);
+  const numPetals = 5;
+
+  for (let i = 0; i < numPetals; i++) {
+    const s = spring((a - i * 65) / 850, 8, 14);
+    if (s <= 0.001) continue;
+    const baseAng = (i * Math.PI * 2) / numPetals;
+    const ca = Math.cos(baseAng), sa = Math.sin(baseAng);
+
+    const pts: [number, number][] = [];
+    const steps = 24;
+    for (let k = 0; k <= steps; k++) {
+      const u = (k / steps) * 2 - 1;
+      const th = u * 0.55;
+      const tipIndent = 1 - 0.22 * Math.exp(-Math.pow(u / 0.22, 2));
+      const rVal = R * (0.96 * tipIndent) * (1 - 0.28 * Math.abs(u));
+      const px = Math.sin(th) * rVal * s;
+      const py = -Math.cos(th) * rVal * s;
+      const rx = px * ca - py * sa;
+      const ry = px * sa + py * ca;
+      pts.push(transform(rx, ry, 0.08));
+    }
+    pts.push(transform(0, 0, 0));
+    backend.fill(pts, palette.red);
+    backend.stroke(pts, palette.line, Math.max(0.5, lw * 0.5));
+
+    if (s > 0.45 && R >= 10) {
+      const vPts: [number, number][] = [
+        transform(0, 0, 0),
+        transform(-ca * R * 0.5 * s, -sa * R * 0.5 * s, 0.1),
+      ];
+      backend.stroke(vPts, palette.line, lw * 0.7);
+    }
+  }
+
+  const pistilBloom = easeOutCubic((a - numPetals * 65 - 60) / 400);
+  if (pistilBloom > 0 && R > 4) {
+    const numPistils = 10;
+    for (let k = 0; k < numPistils; k++) {
+      const pAng = (k * Math.PI * 2) / numPistils + (e.ph1 || 0) * 0.2;
+      const pLen = R * 0.32 * pistilBloom;
+      const px = Math.cos(pAng) * pLen, py = Math.sin(pAng) * pLen;
+      backend.stroke([transform(0, 0, 0), transform(px, py, 0.15)], palette.line, lw * 0.8);
+      if (R >= 12) {
+        const bead: [number, number][] = [];
+        const beadR = Math.max(1, R * 0.04);
+        for (let b = 0; b < 8; b++) {
+          const ba = (b / 8) * Math.PI * 2;
+          bead.push(transform(px + Math.cos(ba) * beadR, py + Math.sin(ba) * beadR, 0.2));
+        }
+        backend.fill(bead, palette.text || palette.line);
+      }
+    }
+    const centerRing: [number, number][] = [];
+    const crR = R * 0.1 * pistilBloom;
+    for (let b = 0; b < 12; b++) {
+      const ba = (b / 12) * Math.PI * 2;
+      centerRing.push(transform(Math.cos(ba) * crR, Math.sin(ba) * crR, 0.2));
+    }
+    backend.fill(centerRing, palette.line);
+  }
+}
+
+/**
+ * Daisy / Marguerite: Radiating ray petals around a vibrant textured golden sun disc
+ */
+export function drawDaisyPetals(
+  backend: any,
+  cx: number,
+  cy: number,
+  R: number,
+  rot: number,
+  e: any,
+  a: number,
+  tl: [number, number] | null,
+  palette: any
+) {
+  const transform = makeTransform(cx, cy, R, rot, tl);
+  const lw = Math.max(0.8, R * 0.04);
+  const numPetals = 14;
+
+  for (let i = 0; i < numPetals; i++) {
+    const s = spring((a - i * 35) / 750, 9, 15);
+    if (s <= 0.001) continue;
+    const ang = (i * Math.PI * 2) / numPetals;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    const pLen = R * 1.18 * s;
+    const pW = R * 0.22 * s;
+
+    const pts: [number, number][] = [];
+    const steps = 14;
+    // Trace first side up to petal tip
+    for (let k = 0; k <= steps; k++) {
+      const u = k / steps;
+      const rad = Math.sin(u * Math.PI) * pW;
+      const along = u * pLen;
+      const perpX = -sa, perpY = ca;
+      pts.push(transform(ca * along + perpX * rad, sa * along + perpY * rad, 0.06));
+    }
+    // Trace second side back to petal base
+    for (let k = steps; k >= 0; k--) {
+      const u = k / steps;
+      const rad = -Math.sin(u * Math.PI) * pW;
+      const along = u * pLen;
+      const perpX = -sa, perpY = ca;
+      pts.push(transform(ca * along + perpX * rad, sa * along + perpY * rad, 0.06));
+    }
+    backend.fill(pts, palette.red);
+    backend.stroke(pts, palette.line, Math.max(0.5, lw * 0.5));
+
+    if (R >= 12 && s > 0.45) {
+      const spine: [number, number][] = [
+        transform(ca * pLen * 0.2, sa * pLen * 0.2, 0.1),
+        transform(ca * pLen * 0.88, sa * pLen * 0.88, 0.1),
+      ];
+      backend.stroke(spine, palette.line, lw * 0.6);
+    }
+  }
+
+  const fr = easeOutCubic((a - 180) / 450);
+  if (fr > 0 && R > 3) {
+    const discR = R * 0.28 * fr;
+    const discPts: [number, number][] = [];
+    for (let k = 0; k < 24; k++) {
+      const da = (k / 24) * Math.PI * 2;
+      discPts.push(transform(Math.cos(da) * discR, Math.sin(da) * discR, 0.22));
+    }
+    backend.fill(discPts, palette.line);
+
+    if (R >= 10) {
+      const innerPts: [number, number][] = [];
+      const inR = discR * 0.6;
+      for (let k = 0; k < 16; k++) {
+        const da = (k / 16) * Math.PI * 2;
+        innerPts.push(transform(Math.cos(da) * inR, Math.sin(da) * inR, 0.25));
+      }
+      backend.stroke(innerPts, palette.vein, lw * 0.9);
+    }
+  }
+}
+
+/**
+ * Tulip: Elegant upright chalice/cup with overlapping layered petals and sepal base
+ */
+export function drawTulipPetals(
+  backend: any,
+  cx: number,
+  cy: number,
+  R: number,
+  rot: number,
+  e: any,
+  a: number,
+  tl: [number, number] | null,
+  palette: any
+) {
+  const transform = makeTransform(cx, cy, R, rot, tl);
+  const lw = Math.max(0.8, R * 0.04);
+  const s = spring(a / 850, 8, 13);
+  if (s <= 0.001) return;
+
+  const open = Math.min(1, Math.max(0, (s - 0.2) / 0.8));
+
+  // Back Center Petal
+  const backPetal: [number, number][] = [
+    transform(0, 0.4 * R, -0.1),
+    transform(-0.25 * R * (0.6 + 0.4 * open), -0.2 * R, -0.05),
+    transform(0, -0.96 * R * s, 0),
+    transform(0.25 * R * (0.6 + 0.4 * open), -0.2 * R, -0.05),
+    transform(0, 0.4 * R, -0.1),
+  ];
+  backend.fill(backPetal, palette.red);
+  backend.stroke(backPetal, palette.line, Math.max(0.5, lw * 0.5));
+
+  // Left Flared Petal
+  const leftPetal: [number, number][] = [
+    transform(0, 0.42 * R, 0),
+    transform(-0.52 * R * s, 0.05 * R, 0.1),
+    transform(-0.48 * R * s, -0.45 * R * s, 0.12),
+    transform(-0.18 * R * s, -0.85 * R * s, 0.08),
+    transform(0, -0.3 * R, 0.05),
+    transform(0, 0.42 * R, 0),
+  ];
+  backend.fill(leftPetal, palette.red);
+  backend.stroke(leftPetal, palette.line, Math.max(0.5, lw * 0.5));
+
+  // Right Overlapping Petal
+  const rightPetal: [number, number][] = [
+    transform(0, 0.42 * R, 0.15),
+    transform(0.52 * R * s, 0.05 * R, 0.2),
+    transform(0.48 * R * s, -0.45 * R * s, 0.22),
+    transform(0.18 * R * s, -0.85 * R * s, 0.18),
+    transform(-0.08 * R * s, -0.35 * R, 0.16),
+    transform(0, 0.42 * R, 0.15),
+  ];
+  backend.fill(rightPetal, palette.red);
+  backend.stroke(rightPetal, palette.line, Math.max(0.5, lw * 0.5));
+
+  // Elegant vein strokes
+  if (R >= 12 && s > 0.4) {
+    const leftVein: [number, number][] = [
+      transform(0, 0.35 * R, 0.08),
+      transform(-0.35 * R * s, -0.2 * R * s, 0.12),
+      transform(-0.18 * R * s, -0.78 * R * s, 0.1),
+    ];
+    backend.stroke(leftVein, palette.line, lw);
+
+    const rightVein: [number, number][] = [
+      transform(0, 0.35 * R, 0.2),
+      transform(0.35 * R * s, -0.2 * R * s, 0.22),
+      transform(0.18 * R * s, -0.78 * R * s, 0.2),
+    ];
+    backend.stroke(rightVein, palette.line, lw);
+  }
+
+  // Base green sepal cup
+  const sepal: [number, number][] = [
+    transform(-0.2 * R * s, 0.28 * R, 0.25),
+    transform(0, 0.52 * R, 0.25),
+    transform(0.2 * R * s, 0.28 * R, 0.25),
+    transform(0, 0.38 * R, 0.25),
+  ];
+  backend.fill(sepal, palette.blue);
+}
+
+/**
+ * Sunflower: Double-row radiant pointed petals with large textured seed floret disc
+ */
+export function drawSunflowerPetals(
+  backend: any,
+  cx: number,
+  cy: number,
+  R: number,
+  rot: number,
+  e: any,
+  a: number,
+  tl: [number, number] | null,
+  palette: any
+) {
+  const transform = makeTransform(cx, cy, R, rot, tl);
+  const lw = Math.max(0.8, R * 0.04);
+  const numPetals = 14;
+
+  // Outer row of pointed petals
+  for (let i = 0; i < numPetals; i++) {
+    const s = spring((a - (i % 7) * 40) / 800, 8, 14);
+    if (s <= 0.001) continue;
+    const ang = (i * Math.PI * 2) / numPetals;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    const pLen = R * 1.35 * s;
+    const pW = R * 0.25 * s;
+    const perpX = -sa, perpY = ca;
+
+    const pts: [number, number][] = [
+      transform(ca * R * 0.2, sa * R * 0.2, 0),
+      transform(ca * R * 0.55 + perpX * pW, sa * R * 0.55 + perpY * pW, 0.05),
+      transform(ca * pLen, sa * pLen, 0.08),
+      transform(ca * R * 0.55 - perpX * pW, sa * R * 0.55 - perpY * pW, 0.05),
+      transform(ca * R * 0.2, sa * R * 0.2, 0),
+    ];
+    backend.fill(pts, palette.red);
+    backend.stroke(pts, palette.line, Math.max(0.5, lw * 0.5));
+  }
+
+  // Inner offset row of pointed petals
+  for (let i = 0; i < numPetals; i++) {
+    const s = spring((a - 100 - (i % 7) * 40) / 800, 8, 14);
+    if (s <= 0.001) continue;
+    const ang = (i * Math.PI * 2) / numPetals + Math.PI / numPetals;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    const pLen = R * 1.15 * s;
+    const pW = R * 0.22 * s;
+    const perpX = -sa, perpY = ca;
+
+    const pts: [number, number][] = [
+      transform(ca * R * 0.22, sa * R * 0.22, 0.1),
+      transform(ca * R * 0.52 + perpX * pW, sa * R * 0.52 + perpY * pW, 0.12),
+      transform(ca * pLen, sa * pLen, 0.15),
+      transform(ca * R * 0.52 - perpX * pW, sa * R * 0.52 - perpY * pW, 0.12),
+      transform(ca * R * 0.22, sa * R * 0.22, 0.1),
+    ];
+    backend.fill(pts, palette.red);
+    backend.stroke(pts, palette.line, Math.max(0.5, lw * 0.5));
+  }
+
+  // Center seed floret disc (kept proportional so it never dwarfs the petals)
+  const fr = easeOutCubic((a - 200) / 500);
+  if (fr > 0 && R > 3) {
+    const discR = R * 0.32 * fr;
+    const discPts: [number, number][] = [];
+    for (let k = 0; k < 28; k++) {
+      const da = (k / 28) * Math.PI * 2;
+      discPts.push(transform(Math.cos(da) * discR, Math.sin(da) * discR, 0.22));
+    }
+    backend.fill(discPts, palette.line);
+
+    if (R >= 10) {
+      for (let sIdx = 0; sIdx < 5; sIdx++) {
+        const spiral: [number, number][] = [];
+        const baseA = (sIdx * Math.PI * 2) / 5;
+        for (let j = 0; j <= 12; j++) {
+          const u = j / 12;
+          const sAng = baseA + u * Math.PI * 1.5;
+          const sr = discR * (0.15 + 0.8 * u);
+          spiral.push(transform(Math.cos(sAng) * sr, Math.sin(sAng) * sr, 0.25));
+        }
+        backend.stroke(spiral, palette.vein, lw * 0.7);
+      }
+    }
+  }
+}
+
+/**
+ * Lotus: Sacred tiered boat-shaped pointed petals with peaceful serene unfolding
+ */
+export function drawLotusPetals(
+  backend: any,
+  cx: number,
+  cy: number,
+  R: number,
+  rot: number,
+  e: any,
+  a: number,
+  tl: [number, number] | null,
+  palette: any
+) {
+  const transform = makeTransform(cx, cy, R, rot, tl);
+  const lw = Math.max(0.8, R * 0.04);
+
+  const numBase = 5;
+  for (let i = 0; i < numBase; i++) {
+    const s = spring((a - i * 50) / 900, 8, 14);
+    if (s <= 0.001) continue;
+    const ang = (i * Math.PI * 2) / numBase;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    const pLen = R * 1.15 * s;
+    const pW = R * 0.28 * s;
+    const perpX = -sa, perpY = ca;
+
+    const pts: [number, number][] = [
+      transform(ca * R * 0.1, sa * R * 0.1, 0),
+      transform(ca * R * 0.5 + perpX * pW, sa * R * 0.5 + perpY * pW, 0.05),
+      transform(ca * pLen, sa * pLen, 0.08),
+      transform(ca * R * 0.5 - perpX * pW, sa * R * 0.5 - perpY * pW, 0.05),
+      transform(ca * R * 0.1, sa * R * 0.1, 0),
+    ];
+    backend.fill(pts, palette.red);
+    backend.stroke(pts, palette.line, Math.max(0.5, lw * 0.5));
+
+    if (R >= 10) {
+      const spine: [number, number][] = [
+        transform(ca * R * 0.2, sa * R * 0.2, 0.06),
+        transform(ca * pLen * 0.88, sa * pLen * 0.88, 0.09),
+      ];
+      backend.stroke(spine, palette.line, lw * 0.7);
+    }
+  }
+
+  const numMid = 6;
+  for (let i = 0; i < numMid; i++) {
+    const s = spring((a - 150 - i * 40) / 850, 8, 14);
+    if (s <= 0.001) continue;
+    const ang = (i * Math.PI * 2) / numMid + Math.PI / numMid;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    const pLen = R * 0.88 * s;
+    const pW = R * 0.24 * s;
+    const perpX = -sa, perpY = ca;
+
+    const pts: [number, number][] = [
+      transform(ca * R * 0.1, sa * R * 0.1, 0.12),
+      transform(ca * R * 0.45 + perpX * pW, sa * R * 0.45 + perpY * pW, 0.16),
+      transform(ca * pLen, sa * pLen, 0.2),
+      transform(ca * R * 0.45 - perpX * pW, sa * R * 0.45 - perpY * pW, 0.16),
+      transform(ca * R * 0.1, sa * R * 0.1, 0.12),
+    ];
+    backend.fill(pts, palette.red);
+    backend.stroke(pts, palette.line, Math.max(0.5, lw * 0.5));
+  }
+
+  const fr = easeOutCubic((a - 250) / 450);
+  if (fr > 0 && R > 3) {
+    const podR = R * 0.22 * fr;
+    const podPts: [number, number][] = [];
+    for (let k = 0; k < 20; k++) {
+      const da = (k / 20) * Math.PI * 2;
+      podPts.push(transform(Math.cos(da) * podR, Math.sin(da) * podR, 0.28));
+    }
+    backend.fill(podPts, palette.line);
+
+    if (R >= 12) {
+      for (let pIdx = 0; pIdx < 5; pIdx++) {
+        const sAng = (pIdx * Math.PI * 2) / 5;
+        const sx = Math.cos(sAng) * podR * 0.52;
+        const sy = Math.sin(sAng) * podR * 0.52;
+        const seedPts: [number, number][] = [];
+        const sRad = Math.max(0.8, R * 0.03);
+        for (let b = 0; b < 6; b++) {
+          const ba = (b / 6) * Math.PI * 2;
+          seedPts.push(transform(sx + Math.cos(ba) * sRad, sy + Math.sin(ba) * sRad, 0.32));
+        }
+        backend.fill(seedPts, palette.text || palette.vein);
+      }
+    }
+  }
+}
+
+/**
+ * Poppy: 4 wide crinkly undulating papery petals with dark central star seed capsule
+ */
+export function drawPoppyPetals(
+  backend: any,
+  cx: number,
+  cy: number,
+  R: number,
+  rot: number,
+  e: any,
+  a: number,
+  tl: [number, number] | null,
+  palette: any
+) {
+  const transform = makeTransform(cx, cy, R, rot, tl);
+  const lw = Math.max(0.8, R * 0.04);
+  const numPetals = 4;
+
+  for (let i = 0; i < numPetals; i++) {
+    const s = spring((a - i * 70) / 850, 8, 14);
+    if (s <= 0.001) continue;
+    const baseAng = (i * Math.PI * 2) / numPetals;
+    const ca = Math.cos(baseAng), sa = Math.sin(baseAng);
+
+    const pts: [number, number][] = [transform(0, 0, 0)];
+    const steps = 22;
+    for (let k = 0; k <= steps; k++) {
+      const u = (k / steps) * 2 - 1;
+      const th = u * 0.68;
+      const ripple = 1 + 0.08 * Math.sin(u * Math.PI * 4 + (e.ph1 || 0));
+      const rVal = R * 1.12 * ripple * s * (1 - 0.22 * u * u);
+      const px = Math.sin(th) * rVal;
+      const py = -Math.cos(th) * rVal;
+      const rx = px * ca - py * sa;
+      const ry = px * sa + py * ca;
+      pts.push(transform(rx, ry, 0.06 + i * 0.03));
+    }
+    pts.push(transform(0, 0, 0));
+    backend.fill(pts, palette.red);
+    backend.stroke(pts, palette.line, Math.max(0.5, lw * 0.5));
+
+    if (R >= 10 && s > 0.45) {
+      const rim = pts.slice(1, pts.length - 1);
+      backend.stroke(rim, palette.line, lw * 0.75);
+    }
+  }
+
+  const fr = easeOutCubic((a - 220) / 450);
+  if (fr > 0 && R > 3) {
+    const capR = R * 0.22 * fr;
+    const capPts: [number, number][] = [];
+    for (let k = 0; k < 22; k++) {
+      const da = (k / 22) * Math.PI * 2;
+      capPts.push(transform(Math.cos(da) * capR, Math.sin(da) * capR, 0.22));
+    }
+    backend.fill(capPts, palette.line);
+
+    if (R >= 10) {
+      for (let ray = 0; ray < 6; ray++) {
+        const rAng = (ray * Math.PI * 2) / 6;
+        const rx = Math.cos(rAng) * capR * 0.85;
+        const ry = Math.sin(rAng) * capR * 0.85;
+        backend.stroke([transform(0, 0, 0.25), transform(rx, ry, 0.25)], palette.vein, lw * 0.9);
+      }
+    }
+  }
+}
+
+/**
+ * Dispatcher to render the appropriate flower species
+ */
+export function drawFlowerPetals(
+  flowerType: FlowerType | undefined,
+  backend: any,
+  cx: number,
+  cy: number,
+  R: number,
+  rot: number,
+  e: any,
+  a: number,
+  tl: [number, number] | null,
+  palette: any
+) {
+  const type = flowerType || e.flowerType || "rose";
+  switch (type) {
+    case "sakura":
+      drawSakuraPetals(backend, cx, cy, R, rot, e, a, tl, palette);
+      break;
+    case "daisy":
+      drawDaisyPetals(backend, cx, cy, R, rot, e, a, tl, palette);
+      break;
+    case "tulip":
+      drawTulipPetals(backend, cx, cy, R, rot, e, a, tl, palette);
+      break;
+    case "sunflower":
+      drawSunflowerPetals(backend, cx, cy, R, rot, e, a, tl, palette);
+      break;
+    case "lotus":
+      drawLotusPetals(backend, cx, cy, R, rot, e, a, tl, palette);
+      break;
+    case "poppy":
+      drawPoppyPetals(backend, cx, cy, R, rot, e, a, tl, palette);
+      break;
+    case "rose":
+    default:
+      drawRosePetals(backend, cx, cy, R, rot, e, a, tl, palette);
+      break;
   }
 }
 

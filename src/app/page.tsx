@@ -4,9 +4,10 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { getPalette } from "../constants/palettes";
 import { getPreset } from "../constants/presets";
 import { SENTINEL, FONT_FAMILY } from "../constants/garden";
+import { FlowerType } from "../constants/flowers";
 import { createRng, easeOutCubic } from "../lib/math";
 import { createBackend } from "../lib/geometry";
-import { Letter, drawRosePetals } from "../lib/garden-engine";
+import { Letter, drawFlowerPetals } from "../lib/garden-engine";
 import { measureCharWidth, layoutCore } from "../lib/layout";
 import { generateLetterGrowth, generateLetterEnd } from "../lib/growth";
 import { renderGardenScene } from "../lib/scene-renderer";
@@ -19,15 +20,20 @@ import { TopChrome } from "../components/TopChrome";
 import { BottomBar } from "../components/BottomBar";
 import { PosterPanel, PosterOrientation } from "../components/PosterPanel";
 
-export default function TypeGarden() {
+export default function Bloom() {
   const [mode, setMode] = useState<"type" | "poster">("type");
   const [preset, setPreset] = useState<string>("breathe");
+  const [flowerType, setFlowerType] = useState<FlowerType>("rose");
   const [paletteIdx, setPaletteIdx] = useState<number>(0);
   const [posterText, setPosterText] = useState<string>("in bloom");
   const [seed, setSeed] = useState<number>(7);
   const [orientation, setOrientation] = useState<PosterOrientation>("landscape"); // Landscape as DEFAULT
   const [status, setStatus] = useState<string>("");
   const [busy, setBusy] = useState<boolean>(false);
+
+  const handlePresetChange = useCallback((newPresetId: string) => {
+    setPreset(newPresetId);
+  }, []);
 
   const { gardenersCount } = usePresence();
 
@@ -157,16 +163,16 @@ export default function TypeGarden() {
   // Letters growth generator
   const gen = useCallback(
     (l: Letter) => {
-      generateLetterGrowth(l, mw, S.props.density, Math.floor(S.rand() * 1e6));
+      generateLetterGrowth(l, mw, S.props.density, Math.floor(S.rand() * 1e6), flowerType);
     },
-    [S, mw]
+    [S, mw, flowerType]
   );
 
   const genEnd = useCallback(
     (l: Letter, rel: number) => {
-      generateLetterEnd(l, rel, mw, S.props.density, Math.floor(S.rand() * 1e6));
+      generateLetterEnd(l, rel, mw, S.props.density, Math.floor(S.rand() * 1e6), flowerType);
     },
-    [S, mw]
+    [S, mw, flowerType]
   );
 
   const addLetter = useCallback(
@@ -191,12 +197,13 @@ export default function TypeGarden() {
         ws: prevL ? prevL.ws : Math.floor(S.rand() * 1e9),
         wi: prevL ? (prevL.wi || 0) + 1 : 0,
         prev: prevL,
+        flowerType,
       };
       gen(l);
       S.letters.push(l);
       layout();
     },
-    [S, gen, genEnd, layout]
+    [S, gen, genEnd, layout, flowerType]
   );
 
   const witherLetter = useCallback(
@@ -251,6 +258,7 @@ export default function TypeGarden() {
         nearPointer,
         fa: S.fa,
         perchList: S.perch,
+        flowerType,
       });
 
       // Update and draw flutter butterflies
@@ -258,7 +266,7 @@ export default function TypeGarden() {
       S._fl = now;
       S.flies = updateAndDrawButterflies(backend, S.flies, S.perch, S.W, S.H, now, dt, pal.colors);
 
-      // Render gifted roses from double taps
+      // Render gifted flowers from double taps
       if (showCaret && S.gifts && S.gifts.length) {
         const LIFE = 60000;
         S.gifts = S.gifts.filter(gf => now - gf.t0 < LIFE);
@@ -266,7 +274,8 @@ export default function TypeGarden() {
           const age = now - gf.t0,
             w = 1 - easeOutCubic((age - (LIFE - 2200)) / 2200);
           g.globalAlpha = Math.max(0, w);
-          drawRosePetals(
+          drawFlowerPetals(
+            gf.flowerType || flowerType,
             backend,
             gf.x * S.W,
             gf.y * S.H + (1 - w) * S.Sd * 0.3,
@@ -281,8 +290,41 @@ export default function TypeGarden() {
         g.globalAlpha = 1;
       }
 
-      // Blinking cursor
-      if (showCaret) {
+      const hasLetters = S.letters.some(l => !l.dead);
+
+      // Placeholder when no letters have been typed
+      if (!hasLetters && showCaret) {
+        const pSize = Math.min(Math.max(22, S.W * 0.04), S.H * 0.075, 42);
+        const pText = "type something...";
+        g.font = `italic 400 ${pSize}px ${FONT_FAMILY}`;
+        const pWidth = g.measureText(pText).width;
+        const gap = Math.max(6, Math.round(pSize * 0.22));
+        const cWidth = Math.max(2, Math.round(pSize * 0.05));
+        const totalW = pWidth + gap + cWidth;
+
+        const startX = S.W / 2 - totalW / 2;
+        const cursorX = startX + cWidth / 2;
+        const textX = startX + cWidth + gap;
+        const centerY = S.H / 2;
+
+        g.save();
+        g.font = `italic 400 ${pSize}px ${FONT_FAMILY}`;
+        g.textAlign = "left";
+        g.textBaseline = "middle";
+        g.fillStyle = pal.colors.text;
+        g.globalAlpha = 0.32;
+        g.fillText(pText, textX, centerY);
+        g.restore();
+
+        // Blinking cursor positioned before the placeholder
+        const on = now - S.lastKey < 500 || Math.floor(now / 530) % 2 === 0;
+        const hf = easeOutCubic((now - S.t0) / 600);
+        if (on && hf > 0) {
+          const cHeight = pSize * 0.95 * hf;
+          backend.rect(cursorX - cWidth / 2, centerY - cHeight / 2, cWidth, cHeight, pal.colors.text);
+        }
+      } else if (showCaret) {
+        // Blinking cursor during typing
         const scale = S.Sd;
         const on = now - S.lastKey < 500 || Math.floor(now / 530) % 2 === 0;
         const hf = easeOutCubic((now - S.t0) / 600);
@@ -293,7 +335,7 @@ export default function TypeGarden() {
         }
       }
     },
-    [S, currentPalette, nearPointer]
+    [S, currentPalette, nearPointer, flowerType]
   );
 
   // Build and draw poster loop
@@ -305,10 +347,54 @@ export default function TypeGarden() {
       posterWidth,
       posterHeight,
       mw,
-      S.props.density
+      S.props.density,
+      flowerType
     );
     S.pt0 = performance.now();
-  }, [posterText, preset, seed, posterWidth, posterHeight, S, mw]);
+  }, [posterText, preset, seed, posterWidth, posterHeight, S, mw, flowerType]);
+
+  const handleRegrow = useCallback(() => {
+    const newRandSeed = Math.floor(Math.random() * 1e6);
+    setSeed(newRandSeed);
+
+    if (S.letters.length > 0) {
+      const now = performance.now();
+      let currentWs = Math.floor(Math.random() * 1e9);
+
+      for (let i = 0; i < S.letters.length; i++) {
+        const l = S.letters[i];
+        if (l.ch === " ") {
+          currentWs = Math.floor(Math.random() * 1e9);
+          continue;
+        }
+        l.ws = currentWs;
+        l.birth = now;
+        l.tb = now;
+        l.dead = null;
+        l.cut = null;
+        if (flowerType && flowerType !== "wildflower") {
+          l.flowerType = flowerType;
+        }
+        generateLetterGrowth(l, mw, S.props.density, newRandSeed + i * 37, flowerType);
+
+        const nx = S.letters[i + 1];
+        if (!nx || nx.ch === " ") {
+          generateLetterEnd(l, 40, mw, S.props.density, newRandSeed + i * 37 + 101, flowerType);
+        }
+      }
+      S.gifts = [];
+      S.perch = [];
+      layout();
+    }
+
+    if (mode === "poster") {
+      buildPoster();
+    }
+
+    if (mode === "type" && S.ptype === "mouse" && inpRef.current) {
+      inpRef.current.focus({ preventScroll: true });
+    }
+  }, [S, mw, flowerType, layout, mode, buildPoster]);
 
   const posterDraw = useCallback(
     (g: CanvasRenderingContext2D, t: number) => {
@@ -611,6 +697,7 @@ export default function TypeGarden() {
           buildPoster();
         })
         .catch(() => {});
+      document.fonts.load(`italic 400 32px ${FONT_FAMILY}`).catch(() => {});
     }
 
     S.vmime =
@@ -648,10 +735,10 @@ export default function TypeGarden() {
     buildPoster();
   }, [paletteIdx, currentPalette, buildPoster]);
 
-  // Rebuild poster when preset, orientation, posterText, or seed changes
+  // Rebuild poster when preset, orientation, posterText, flowerType, or seed changes
   useEffect(() => {
     buildPoster();
-  }, [preset, orientation, posterText, seed, buildPoster]);
+  }, [preset, orientation, posterText, seed, flowerType, buildPoster]);
 
   return (
     <div
@@ -695,6 +782,7 @@ export default function TypeGarden() {
         ref={inpRef}
         data-tg="input"
         aria-label="Type to grow a garden"
+        placeholder="type something..."
         autoCapitalize="off"
         autoComplete="off"
         autoCorrect="off"
@@ -779,10 +867,31 @@ export default function TypeGarden() {
           textColor={currentPalette.colors.text}
           bgColor={currentPalette.bg}
           gardenersCount={gardenersCount}
+          flowerType={flowerType}
           onPaletteSelect={idx => {
             setPaletteIdx(idx);
             if (S.ptype === "mouse" && inpRef.current) inpRef.current.focus({ preventScroll: true });
           }}
+          onFlowerSelect={flw => {
+            setFlowerType(flw);
+            for (const l of S.letters) {
+              if (!l.dead && l.ch !== " ") {
+                l.flowerType = flw;
+                if (l.els) {
+                  for (const el of l.els) {
+                    if (el.t === "rose") (el as any).flowerType = flw;
+                  }
+                }
+                if (l.endEls) {
+                  for (const el of l.endEls) {
+                    if (el.t === "rose") (el as any).flowerType = flw;
+                  }
+                }
+              }
+            }
+            if (S.ptype === "mouse" && inpRef.current) inpRef.current.focus({ preventScroll: true });
+          }}
+          onRegrow={handleRegrow}
           onSavePNG={handleSavePNG}
           onSaveSVG={handleSaveSVG}
         />
@@ -808,11 +917,13 @@ export default function TypeGarden() {
           <PosterPanel
             posterText={posterText}
             onPosterTextChange={setPosterText}
-            onRegrow={() => setSeed(Math.floor(Math.random() * 1e6))}
+            onRegrow={handleRegrow}
             orientation={orientation}
             onOrientationChange={setOrientation}
             currentPreset={preset}
-            onPresetChange={setPreset}
+            onPresetChange={handlePresetChange}
+            flowerType={flowerType}
+            onFlowerChange={setFlowerType}
             paletteIdx={paletteIdx}
             onPaletteChange={setPaletteIdx}
             onExportVideo={handleExportVideo}
@@ -846,6 +957,12 @@ export default function TypeGarden() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                aspectRatio:
+                  orientation === "landscape"
+                    ? "16 / 9"
+                    : orientation === "portrait"
+                    ? "9 / 16"
+                    : "1 / 1",
                 width:
                   orientation === "landscape"
                     ? "min(100%, calc((100vh - 120px) * 16 / 9))"
@@ -880,6 +997,59 @@ export default function TypeGarden() {
                 }}
               />
             </div>
+
+            {/* Refresh button outside the canvas in the stage container on bottom-right */}
+            <button
+              type="button"
+              onClick={handleRegrow}
+              title="Regrow garden (Refresh)"
+              aria-label="Regrow garden"
+              style={{
+                position: "absolute",
+                bottom: 24,
+                right: 28,
+                zIndex: 10,
+                width: 42,
+                height: 42,
+                borderRadius: 999,
+                background: "rgba(255, 255, 255, 0.06)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                border: "1px solid #2A2A2A",
+                color: "#CCCCCC",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 6px 20px rgba(0, 0, 0, 0.6)",
+                transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = "scale(1.1) rotate(15deg)";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+                e.currentTarget.style.borderColor = "#FFFFFF";
+                e.currentTarget.style.color = "#FFFFFF";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = "scale(1) rotate(0deg)";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
+                e.currentTarget.style.borderColor = "#2A2A2A";
+                e.currentTarget.style.color = "#CCCCCC";
+              }}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
