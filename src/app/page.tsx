@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { getPalette } from "../constants/palettes";
 import { getPreset } from "../constants/presets";
-import { SENTINEL, FONT_FAMILY } from "../constants/garden";
+import { FONT_FAMILY } from "../constants/garden";
 import { FlowerType } from "../constants/flowers";
 import { createRng, easeOutCubic } from "../lib/math";
 import { createBackend } from "../lib/geometry";
@@ -83,7 +83,7 @@ export default function Bloom() {
     gifts: [] as any[],
     touch: false,
     ptype: "mouse",
-    iv: SENTINEL,
+    iv: "",
     composing: false,
     _kd: false,
     lastTap: null as { t: number; x: number; y: number } | null,
@@ -385,6 +385,9 @@ export default function Bloom() {
       S.gifts = [];
       S.perch = [];
       layout();
+      const live = S.letters.filter(l => !l.dead).map(l => l.ch).join("");
+      S.iv = live;
+      if (inpRef.current) inpRef.current.value = live;
     }
 
     if (mode === "poster") {
@@ -599,7 +602,7 @@ export default function Bloom() {
         S._kd = true;
         setTimeout(() => {
           S._kd = false;
-        }, 0);
+        }, 50);
         if (!last) return;
         last.dead = now;
         const pv = A[A.length - 2];
@@ -609,6 +612,9 @@ export default function Bloom() {
           pv.tb = now;
         }
         layout();
+        const live = S.letters.filter(l => !l.dead).map(l => l.ch).join("");
+        S.iv = live;
+        if (inpRef.current) inpRef.current.value = live;
         return;
       }
       if (e.key === "Enter") {
@@ -617,8 +623,10 @@ export default function Bloom() {
         S._kd = true;
         setTimeout(() => {
           S._kd = false;
-        }, 0);
+        }, 50);
         S.letters = [];
+        S.iv = "";
+        if (inpRef.current) inpRef.current.value = "";
         layout();
         return;
       }
@@ -628,8 +636,11 @@ export default function Bloom() {
       S._kd = true;
       setTimeout(() => {
         S._kd = false;
-      }, 0);
+      }, 50);
       addLetter(e.key, now);
+      const live = S.letters.filter(l => !l.dead).map(l => l.ch).join("");
+      S.iv = live;
+      if (inpRef.current) inpRef.current.value = live;
     };
     window.addEventListener("keydown", onKey);
 
@@ -711,6 +722,9 @@ export default function Bloom() {
         : null;
 
     buildPoster();
+    const initLive = S.letters.filter(l => !l.dead).map(l => l.ch).join("");
+    S.iv = initLive;
+    if (inpRef.current) inpRef.current.value = initLive;
     if (!S.touch && inpRef.current) inpRef.current.focus({ preventScroll: true });
 
     return () => {
@@ -754,7 +768,11 @@ export default function Bloom() {
         if (mode !== "type" || !inpRef.current) return;
         const isTouch = e.pointerType && e.pointerType !== "mouse";
         const onCanvas = e.target === cvRef.current;
-        if (!isTouch) inpRef.current.focus({ preventScroll: true });
+        if (!isTouch) {
+          inpRef.current.focus({ preventScroll: true });
+          const len = inpRef.current.value.length;
+          inpRef.current.setSelectionRange(len, len);
+        }
         if (onCanvas) {
           S.flies.push(spawnButterfly(S.flies, S.perch, e.clientX, e.clientY, S.W, S.H, S.Sd));
         }
@@ -762,6 +780,8 @@ export default function Bloom() {
       onClick={e => {
         if (mode === "type" && inpRef.current && S.ptype !== "mouse" && e.target === cvRef.current) {
           inpRef.current.focus({ preventScroll: true });
+          const len = inpRef.current.value.length;
+          inpRef.current.setSelectionRange(len, len);
         }
       }}
     >
@@ -787,38 +807,47 @@ export default function Bloom() {
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
-        defaultValue={SENTINEL}
+        defaultValue=""
         onInput={e => {
-          const sChar = SENTINEL;
           if (mode !== "type" || S._kd) return;
-          const old = S.iv == null ? sChar : S.iv,
-            cur = e.currentTarget.value;
+          const cur = e.currentTarget.value;
+          const old = S.iv ?? "";
+
           let p = 0;
           while (p < old.length && p < cur.length && old[p] === cur[p]) p++;
-          let dels = old.length - p;
-          if (p === 0 && old[0] === sChar && old.length > 1) dels -= 1;
+
+          let s = 0;
+          while (
+            s < old.length - p &&
+            s < cur.length - p &&
+            old[old.length - 1 - s] === cur[cur.length - 1 - s]
+          ) {
+            s++;
+          }
+
+          const dels = old.length - p - s;
+          const ins = cur.slice(p, cur.length - s);
+
           const now = performance.now();
           S.lastKey = now;
+
           for (let i = 0; i < dels; i++) witherLetter(now);
-          for (const ch of cur.slice(p)) {
-            if (ch === sChar) continue;
+          for (const ch of ins) {
             if (ch.charCodeAt(0) === 10) {
               S.letters = [];
               layout();
-            } else addLetter(ch, now);
+            } else {
+              addLetter(ch, now);
+            }
           }
-          if (S.composing) S.iv = cur;
-          else {
-            e.currentTarget.value = sChar;
-            S.iv = sChar;
-          }
+
+          S.iv = cur;
         }}
         onCompositionStart={() => {
           S.composing = true;
         }}
-        onCompositionEnd={e => {
+        onCompositionEnd={() => {
           S.composing = false;
-          e.currentTarget.dispatchEvent(new Event("input"));
         }}
         style={{
           position: "fixed",
@@ -854,7 +883,14 @@ export default function Bloom() {
           if (newMode === "type") {
             setTimeout(() => {
               resize();
-              if (inpRef.current) inpRef.current.focus({ preventScroll: true });
+              const live = S.letters.filter(l => !l.dead).map(l => l.ch).join("");
+              S.iv = live;
+              if (inpRef.current) {
+                inpRef.current.value = live;
+                inpRef.current.focus({ preventScroll: true });
+                const len = live.length;
+                inpRef.current.setSelectionRange(len, len);
+              }
             }, 50);
           }
         }}
