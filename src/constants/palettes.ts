@@ -14,6 +14,8 @@ export interface PaletteItem {
   };
 }
 
+export type Palette = PaletteItem;
+
 export const RAW_PALETTES: [string, string, string, string, string, string][] = [
   ["Rose noir", "#000000", "#FF1400", "#3257FF", "#FFB4A8", "#FFFFFF"],
   ["Paper", "#F3EEE4", "#FF3B1F", "#1C2B8F", "#FFD2C4", "#111111"],

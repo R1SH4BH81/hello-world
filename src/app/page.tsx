@@ -488,7 +488,7 @@ export default function TypeGarden() {
   // Lifecycle & Keyboard / Pointer listeners
   useEffect(() => {
     S.t0 = performance.now();
-    S.touch = !!(window.matchMedia && matchMedia("(pointer: coarse)").matches);
+    S.touch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
     if (S.touch) document.documentElement.setAttribute("data-touch", "");
 
     const onResize = () => resize();

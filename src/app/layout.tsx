@@ -5,7 +5,6 @@ export const metadata: Metadata = {
   title: "Type Garden",
   description:
     "Type, and a garden grows from your letters. Space cuts the stems, backspace withers them.",
-  themeColor: "#000000",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "32x32" },
@@ -39,6 +38,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
