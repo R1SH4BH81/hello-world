@@ -43,13 +43,13 @@ export function TopChrome({ mode, onModeChange }: TopChromeProps) {
         </div>
 
         <div className="by">
-          by{" "}
+          see{" "}
           <a
             href="https://rishxbh.me"
             target="_blank"
             rel="noopener noreferrer"
           >
-            rishabh
+            more
           </a>
         </div>
       </div>
