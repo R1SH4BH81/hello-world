@@ -419,7 +419,7 @@ export default function Bloom() {
   const handleSavePNG = () => {
     if (!cvRef.current) return;
     paintTypeScene(performance.now(), false);
-    cvRef.current.toBlob(b => b && downloadBlob(b, "garden.png"));
+    cvRef.current.toBlob(b => b && downloadBlob(b, "bloom.png"));
   };
 
   // Save SVG
@@ -443,7 +443,7 @@ export default function Bloom() {
       S._gl,
       S.props
     );
-    downloadBlob(new Blob([svg], { type: "image/svg+xml" }), "garden.svg");
+    downloadBlob(new Blob([svg], { type: "image/svg+xml" }), "bloom.svg");
   };
 
   // Export Video
@@ -492,7 +492,7 @@ export default function Bloom() {
     rec.stop();
     await done;
     const ext = S.vmime.includes("mp4") ? "mp4" : "webm";
-    const fname = `garden-${(posterText || "loop")
+    const fname = `bloom-${(posterText || "loop")
       .trim()
       .replace(/[^a-z0-9]+/gi, "-")
       .toLowerCase()
@@ -527,7 +527,7 @@ export default function Bloom() {
       }
       if (i % 10 === 0) setStatus(`Rendering ${Math.round((i / N) * 100)}%`);
     }
-    const fname = `garden-${(posterText || "loop")
+    const fname = `bloom-${(posterText || "loop")
       .trim()
       .replace(/[^a-z0-9]+/gi, "-")
       .toLowerCase()

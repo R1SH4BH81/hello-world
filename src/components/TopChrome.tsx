@@ -9,8 +9,6 @@ interface TopChromeProps {
 
 export function TopChrome({ mode, onModeChange }: TopChromeProps) {
   const [copied, setCopied] = useState(false);
-  const [coffeeActive, setCoffeeActive] = useState(false);
-  const [coffeePressed, setCoffeePressed] = useState(false);
 
   const handleCopyCode = async () => {
     try {
@@ -42,6 +40,17 @@ export function TopChrome({ mode, onModeChange }: TopChromeProps) {
           <div className="note" aria-live="polite">
             Paste it into Claude to grow your own
           </div>
+        </div>
+
+        <div className="by">
+          by{" "}
+          <a
+            href="https://rishxbh.me"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            rishabh
+          </a>
         </div>
       </div>
 
